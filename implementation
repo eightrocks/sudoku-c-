@@ -1,0 +1,183 @@
+class Solution {
+public:
+    vector<char> getCol(vector<vector<char>>& board, int row, int col) {
+        vector<char> ret;
+        for (int i = 0; i < 9; ++i) {
+            ret.emplace_back(board[i][col]);
+        }
+        return ret;
+    }
+    vector<char> getBox(vector<vector<char>>& board, int row, int col) {
+        vector<char> ret;
+        if (row < 3 && col < 3) { //first box
+            for (int i = 0; i < 3; ++i) {
+                for (int j = 0; j < 3; ++j){
+                    ret.emplace_back(board[i][j]);
+                }
+            }
+        } else if (row < 3 && col >= 3 && col < 6) { //second box
+            for (int i = 0; i < 3; ++i) {
+                for (int j = 3; j < 6; ++j){
+                    ret.emplace_back(board[i][j]);
+                }
+            }
+        } else if (row < 3 && col >= 6 && col < 9) { //third box
+            for (int i = 0; i < 3; ++i) {
+                for (int j = 6; j < 9; ++j){
+                    ret.emplace_back(board[i][j]);
+                }
+            }
+        } else if (row >= 3 && row < 6 && col < 3) { //4th box
+            for (int i = 3; i < 6; ++i) {
+                for (int j = 0; j < 3; ++j){
+                    ret.emplace_back(board[i][j]);
+                }
+            }
+        } else if (row >= 3 && row < 6 && col >= 3 && col < 6) { //5th box
+            for (int i = 3; i < 6; ++i) {
+                for (int j = 3; j < 6; ++j){
+                    ret.emplace_back(board[i][j]);
+                }
+            }
+        } else if (row >= 3 && row < 6 && col >= 6 && col < 9) { //6th box
+            for (int i = 3; i < 6; ++i) {
+                for (int j = 6; j < 9; ++j){
+                    ret.emplace_back(board[i][j]);
+                }
+            }
+        } else if (row >= 6 && row < 9 && col < 3) { //7th box
+            for (int i = 6; i < 9; ++i) {
+                for (int j = 0; j < 3; ++j){
+                    ret.emplace_back(board[i][j]);
+                }
+            }
+        } else if (row >= 6  && row < 9 && col >= 3 && col < 6) { //8th box
+            for (int i = 6; i < 9; ++i) {
+                for (int j = 3; j < 6; ++j){
+                    ret.emplace_back(board[i][j]);
+                }
+            }
+        } else if (row >= 6 && row < 9 && col >= 6 && col < 9) { //9th box
+            for (int i = 6; i < 9; ++i) {
+                for (int j = 6; j < 9; ++j){
+                    ret.emplace_back(board[i][j]);
+                }
+            }
+        }
+        return ret;
+    }
+    bool member(vector<char> list, char c){
+        for (auto i: list) {
+            if (strncmp(&c,&i,1) == 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    //use a mutal recursion for generateVal maybe
+    int nextRow(vector<vector<char>> board, int i, int j) {
+        // base case
+        if (i == 8 && j == 8) {
+            return -1;
+        }
+        if (j == 8) {
+            ++i;
+            j = 0;
+        } else {
+            ++j;
+        }
+        if (strncmp(&board[i][j], ".", 1) != 0) {
+            return nextRow(board,i, j);
+        } else {
+            return i;
+        }        
+    }
+    int nextCol(vector<vector<char>> board, int i, int j) {
+        // base case
+        if (i == 8 && j == 8) {
+            return -1;
+        }
+        if (j == 8) {
+            ++i;
+            j = 0;
+        } else {
+            ++j;
+        }
+        if (strncmp(&board[i][j], ".", 1) != 0) {
+            return nextCol(board,i, j);
+        } else {
+            return j;
+        }    
+    }
+    vector<char> generateVal(vector<vector<char>> board, vector<char> row, vector<char> col, vector<char> box, int i, int j) {
+        vector<char> stuff = {'1', '2', '3', '4', '5', '6', '7', '8', '9'};
+        vector<char> ret;
+        if (strncmp(&board[i][j], ".", 1) != 0) {
+            ret.emplace_back(board[i][j]);
+            return ret;
+        }
+        for (auto e: stuff) {
+            if ((not (member(row, e))) && (not (member(col, e))) && (not (member(box, e)))) {
+                ret.emplace_back(e);
+            }
+        }
+        return ret;
+    }
+    void removeChar(vector<char>& stuff, char id) {
+        int len = stuff.size();
+        for (int i = 0; i < len; ++i) {
+            if (strncmp(&id, &stuff[i], 1) == 0) {
+                stuff.erase(stuff.begin()+i);
+            }
+        }
+    }
+    vector<char> nextVals(vector<vector<char>>& board, int i, int j) {
+        assert(i >=0);
+        assert(j >=0);
+         vector<char> possible_values = generateVal(board, board[i], getCol(board, i, j), getBox(board, i, j), i, j);
+        vector<char> copy = possible_values;
+                if (nextRow(board,i,j) == -1) {
+                    // cout <<"(" << i << "," << j << ")" << endl;
+                    return copy;
+                }
+                for (auto it : copy) {
+                    board[i][j] = it;   
+                    vector<char> next_pos_values = nextVals(board, nextRow(board, i, j), nextCol(board, i, j));
+                    int len = next_pos_values.size();
+                    if (len > 0) { //good
+                        break;
+                    } else {
+                        removeChar(possible_values, it);
+                        board[i][j] = '.';
+                    } 
+                }
+        return possible_values;
+    }
+    void solveSudoku(vector<vector<char>>& board) {
+        for (int i = 0; i < 9; ++i) {
+            for (int j = 0; j < 9; ++j){
+                if (strncmp(&board[i][j], ".", 1) != 0) { //move on to next cell
+                    continue;
+                    
+                }
+                vector<char> possible_values = generateVal(board, board[i], getCol(board, i, j), getBox(board, i, j), i, j);
+                
+                if (nextRow(board,i,j) == -1) {
+                    board[i][j] = possible_values[0];
+                    return;
+                }
+                for (auto it : possible_values) {
+                    board[i][j] = it;   
+                    vector<char> next_pos_values = nextVals(board, nextRow(board,i,j), nextCol(board, i,j));
+                    int len = next_pos_values.size();
+                    if (len > 0) { //good
+                        break;
+                    } else {
+                        board[i][j] = '.';
+                    }
+                }
+            }
+        }       
+    }
+};
